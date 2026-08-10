@@ -17,6 +17,25 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+// The /embed route exists to be dropped into <iframe>s on third-party sites.
+// Everything else keeps whatever frame protection applies; this one route is
+// explicitly exempted so blogs can embed it without a framing block.
+const embedFrameMiddleware = createMiddleware().server(async ({ pathname, next }) => {
+  const result = await next();
+  if (pathname !== "/embed") return result;
+  const response = result instanceof Response ? result : result.response;
+  if (!(response instanceof Response)) return result;
+  const headers = new Headers(response.headers);
+  headers.delete("X-Frame-Options");
+  headers.set("Content-Security-Policy", "frame-ancestors *");
+  const framed = new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+  return result instanceof Response ? framed : { ...result, response: framed };
+});
+
 // Start installs this automatically when src/start.ts is absent; defining the
 // file opts out, so re-add it explicitly to keep server functions protected
 // from cross-site requests.
@@ -25,5 +44,5 @@ const csrfMiddleware = createCsrfMiddleware({
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [errorMiddleware, csrfMiddleware, embedFrameMiddleware],
 }));
