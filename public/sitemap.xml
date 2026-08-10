@@ -1,170 +1,170 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://js-timeline-explore.lovable.app/</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/pre-es6</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/pre-es6</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/pre-es6/var-hoisting</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/pre-es6/var-hoisting</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/pre-es6/callbacks</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/pre-es6/callbacks</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/pre-es6/prototypes</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/pre-es6/prototypes</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/pre-es6/strict-mode</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/pre-es6/strict-mode</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/es2015</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/es2015</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/es2015/let-const</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/es2015/let-const</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/es2015/arrow-this</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/es2015/arrow-this</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/es2015/promises</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/es2015/promises</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/es2015/classes</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/es2015/classes</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/async-era</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/async-era</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/async-era/async-await</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/async-era/async-await</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/async-era/loop-maturity</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/async-era/loop-maturity</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/async-era/unhandled-rejections</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/async-era/unhandled-rejections</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modules</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modules</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modules/esm</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modules/esm</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modules/resolution</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modules/resolution</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modules/cjs-interop</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modules/cjs-interop</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modern</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modern</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modern/optional-chaining</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modern/optional-chaining</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modern/tla</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modern/tla</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/modern/copy-methods</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/modern/copy-methods</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/runtimes</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/runtimes</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/runtimes/runtime-shape</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/runtimes/runtime-shape</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/runtimes/io-stdlib</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/runtimes/io-stdlib</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/runtimes/feature-detection</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/runtimes/feature-detection</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://js-timeline-explore.lovable.app/era/runtimes/edge</loc>
-    <lastmod>2026-08-08</lastmod>
+    <loc>https://runtimejs.vercel.app/era/runtimes/edge</loc>
+    <lastmod>2026-08-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://js-timeline-explore.lovable.app/sitemap.xml
+Sitemap: https://runtimejs.vercel.app/sitemap.xml
