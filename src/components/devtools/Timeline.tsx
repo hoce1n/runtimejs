@@ -1,8 +1,40 @@
-import { useRef, type KeyboardEvent } from "react";
-import { ChevronRight, Play } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Check, ChevronRight, Play } from "lucide-react";
 import { ERAS, type Concept } from "@/lib/js-eras";
+import { getProgress, isConceptDone, toggleConcept } from "@/lib/progress";
 import { CodeBlock } from "./CodeBlock";
 import { CopyButton } from "./CopyButton";
+
+const ALL_CONCEPT_IDS = ERAS.flatMap((era) => era.concepts.map((concept) => concept.id));
+
+/**
+ * Client-only "understood" tracking. Initialised empty so server-rendered
+ * HTML and the hydration pass agree; the real set is read from localStorage
+ * once the effect runs in the browser.
+ */
+function useConceptProgress() {
+  const [done, setDone] = useState<Set<string>>(() => new Set());
+  const [total] = useState(() => getProgress().total);
+
+  useEffect(() => {
+    setDone(new Set(ALL_CONCEPT_IDS.filter((id) => isConceptDone(id))));
+  }, []);
+
+  const toggle = useCallback((conceptId: string) => {
+    toggleConcept(conceptId);
+    setDone((prev) => {
+      const next = new Set(prev);
+      if (next.has(conceptId)) {
+        next.delete(conceptId);
+      } else {
+        next.add(conceptId);
+      }
+      return next;
+    });
+  }, []);
+
+  return { done, total, toggle };
+}
 
 const RUNTIME_COLOR: Record<string, string> = {
   V8: "text-warning",
@@ -26,6 +58,7 @@ export function Timeline({
 }) {
   const era = ERAS.find((e) => e.id === activeEra) ?? ERAS[0]!;
   const railRef = useRef<HTMLElement | null>(null);
+  const { done, total, toggle } = useConceptProgress();
 
   const onRailKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     if (e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "Home" && e.key !== "End") {
@@ -58,8 +91,11 @@ export function Timeline({
         className="bg-panel p-2"
         aria-label="JavaScript eras"
       >
-        <p className="px-2 pb-2 pt-1 text-[10.5px] uppercase tracking-widest text-muted-foreground">
-          Timeline
+        <p className="flex items-baseline justify-between gap-2 px-2 pb-2 pt-1 text-[10.5px] uppercase tracking-widest text-muted-foreground">
+          <span>Timeline</span>
+          <span className="normal-case tracking-normal">
+            {done.size} / {total} concepts
+          </span>
         </p>
         <ol className="space-y-px">
           {ERAS.map((e, i) => {
@@ -114,6 +150,8 @@ export function Timeline({
                 key={concept.id}
                 concept={concept}
                 open={expandedConcept === concept.id}
+                done={done.has(concept.id)}
+                onMark={() => toggle(concept.id)}
                 onToggle={() => onToggleConcept(expandedConcept === concept.id ? null : concept.id)}
                 onRun={onRun}
               />
@@ -128,31 +166,58 @@ export function Timeline({
 function ConceptRow({
   concept,
   open,
+  done,
+  onMark,
   onToggle,
   onRun,
 }: {
   concept: Concept;
   open: boolean;
+  done: boolean;
+  onMark: () => void;
   onToggle: () => void;
   onRun: (code: string) => void;
 }) {
   return (
     <section className="py-4">
-      <button
-        onClick={onToggle}
-        aria-expanded={open}
-        className="group flex w-full items-center gap-2 rounded-sm px-1.5 py-1 text-left transition-colors hover:bg-accent/40 active:bg-accent/60"
-      >
-        <ChevronRight
-          className={`size-4 shrink-0 text-muted-foreground transition-all group-hover:text-foreground ${open ? "rotate-90 text-foreground" : ""}`}
-        />
-        <h3 className="text-sm font-medium text-foreground">{concept.name}</h3>
-        {concept.ecosystem && (
-          <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground">
-            + runtime comparison
-          </span>
-        )}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onMark}
+          aria-pressed={done}
+          aria-label={`${done ? "Mark as not understood" : "Mark as understood"}: ${concept.name}`}
+          title={done ? "Mark as not understood" : "Mark as understood"}
+          className={`grid size-4 shrink-0 place-items-center rounded-[3px] border transition-colors ${
+            done
+              ? "border-primary/60 bg-primary/10 text-primary"
+              : "border-border text-muted-foreground/0 hover:border-secondary hover:text-secondary"
+          }`}
+        >
+          <Check className="size-3" strokeWidth={2.5} />
+        </button>
+        <button
+          onClick={onToggle}
+          aria-expanded={open}
+          className="group flex min-w-0 flex-1 items-center gap-2 rounded-sm px-1 py-1 text-left transition-colors hover:bg-accent/40 active:bg-accent/60"
+        >
+          <ChevronRight
+            className={`size-4 shrink-0 text-muted-foreground transition-all group-hover:text-foreground ${open ? "rotate-90 text-foreground" : ""}`}
+          />
+          <h3
+            className={`truncate text-sm ${
+              done
+                ? "font-normal text-muted-foreground line-through decoration-muted-foreground/40"
+                : "font-medium text-foreground"
+            }`}
+          >
+            {concept.name}
+          </h3>
+          {concept.ecosystem && (
+            <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground">
+              + runtime comparison
+            </span>
+          )}
+        </button>
+      </div>
 
       {open && (
         <div className="mt-3 space-y-4 pl-6">
