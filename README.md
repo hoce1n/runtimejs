@@ -31,6 +31,23 @@ Then open the local URL shown by Vite. (The lockfile is generated with [Bun](htt
 
 The app is built with TanStack Start and Vite. User code runs in a sandboxed iframe, and the event-loop trace is generated from Acorn-based AST instrumentation plus controlled queue tracking.
 
+## Embed this
+
+The REPL and event-loop visualizer are also available as a standalone, iframe-friendly page — no app chrome, no search, just the tool — so you can drop a runnable example straight into a blog post or docs page.
+
+The embed lives at `/embed`. Add `?example=<id>` to preload a specific snippet (either a REPL example id or an interview-pattern id from the main site); unknown ids fall back to the default example. `?view=loop` opens the event-loop view instead of the console.
+
+```html
+<iframe
+  src="https://runtimejs.vercel.app/embed?example=event-loop-order"
+  width="100%"
+  height="480"
+  style="border:0;border-radius:8px;"
+></iframe>
+```
+
+The small "via runtime.js" badge in the corner links back to the main site, which is the whole point of embedding it.
+
 ## Analytics
 
 Cookie-less, privacy-friendly analytics are built in but **disabled by default** — no script is loaded until you configure a provider:
