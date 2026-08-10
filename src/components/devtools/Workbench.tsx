@@ -132,7 +132,7 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
   return (
     <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border lg:grid-cols-2">
       {/* editor column */}
-      <div className="flex min-h-[300px] flex-col bg-card lg:min-h-[520px]">
+      <div className="flex h-[300px] flex-col bg-card lg:h-[520px]">
         <div className="flex flex-wrap items-center gap-2 border-b border-border bg-panel px-3 py-2">
           <button
             onClick={handleRun}
@@ -236,7 +236,7 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
               onChange={onCodeChange}
               onRun={handleRun}
               activeLine={state.currentLine ?? null}
-              minHeight={isMobile ? "220px" : "440px"}
+              minHeight={isMobile ? "140px" : "380px"}
             />
           </Suspense>
         </div>
@@ -318,7 +318,7 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
       </div>
 
       {/* output column */}
-      <div className="flex min-h-[300px] flex-col bg-card lg:min-h-[520px]">
+      <div className="flex h-[300px] flex-col bg-card lg:h-[520px]">
         <div className="flex items-center gap-2 border-b border-border bg-panel px-3 py-2 text-xs text-muted-foreground">
           {view === "console" ? <Terminal className="size-3.5" /> : <Zap className="size-3.5" />}
           {view === "console" ? "Console output" : "Event loop — live instrumentation"}
