@@ -6,6 +6,7 @@ import {
   INTERVIEW_PATTERNS,
   type InterviewPattern,
 } from "@/lib/interview-patterns";
+import { gotchaForDate } from "@/lib/gotcha-of-the-day";
 import { CodeBlock } from "./CodeBlock";
 
 const DIFFICULTY_COLOR: Record<InterviewPattern["difficulty"], string> = {
@@ -13,6 +14,15 @@ const DIFFICULTY_COLOR: Record<InterviewPattern["difficulty"], string> = {
   medium: "text-warning",
   hard: "text-destructive",
 };
+
+/** Client-only: picks today's gotcha after mount so SSR and hydration agree. */
+function useGotchaOfTheDay() {
+  const [gotcha, setGotcha] = useState<InterviewPattern | null>(null);
+  useEffect(() => {
+    setGotcha(gotchaForDate(new Date()));
+  }, []);
+  return gotcha;
+}
 
 export function PatternLibrary({
   onRun,
@@ -24,6 +34,8 @@ export function PatternLibrary({
   onConsumeFocusedPattern?: (() => void) | undefined;
 }) {
   const total = INTERVIEW_PATTERNS.length;
+  const gotcha = useGotchaOfTheDay();
+  const [localFocus, setLocalFocus] = useState<string | null>(null);
 
   return (
     <section aria-label="Interview question patterns">
@@ -37,6 +49,8 @@ export function PatternLibrary({
           sandboxed console to watch it really run.
         </p>
       </div>
+
+      {gotcha && <GotchaCard pattern={gotcha} onFocus={() => setLocalFocus(gotcha.id)} />}
 
       <div className="overflow-hidden rounded-sm border border-border bg-card">
         {CATEGORY_ORDER.map((category) => {
@@ -53,8 +67,14 @@ export function PatternLibrary({
                     key={pattern.id}
                     pattern={pattern}
                     onRun={onRun}
-                    focused={focusedPattern === pattern.id}
-                    onConsumeFocus={onConsumeFocusedPattern}
+                    focused={focusedPattern === pattern.id || localFocus === pattern.id}
+                    onConsumeFocus={() => {
+                      if (localFocus === pattern.id) {
+                        setLocalFocus(null);
+                      } else {
+                        onConsumeFocusedPattern?.();
+                      }
+                    }}
                   />
                 ))}
               </div>
@@ -63,6 +83,24 @@ export function PatternLibrary({
         })}
       </div>
     </section>
+  );
+}
+
+function GotchaCard({ pattern, onFocus }: { pattern: InterviewPattern; onFocus: () => void }) {
+  return (
+    <button
+      onClick={onFocus}
+      title={`Jump to "${pattern.title}"`}
+      className="group mb-4 block w-full max-w-3xl rounded-sm border border-border bg-card px-3 py-2.5 text-left transition-colors hover:border-primary/60 hover:bg-accent/30 active:bg-accent/50"
+    >
+      <span className="flex items-center gap-2">
+        <span className="text-[10.5px] uppercase tracking-widest text-secondary">
+          Today&apos;s gotcha
+        </span>
+        <ChevronRight className="ml-auto size-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </span>
+      <span className="mt-1 block text-sm font-medium text-foreground">{pattern.title}</span>
+    </button>
   );
 }
 
@@ -89,7 +127,10 @@ function PatternRow({
   }, [focused, pattern.id, onConsumeFocus]);
 
   return (
-    <section className="px-3 py-3 transition-colors hover:bg-accent/30">
+    <section
+      id={`pattern-row-${pattern.id}`}
+      className="px-3 py-3 transition-colors hover:bg-accent/30"
+    >
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
