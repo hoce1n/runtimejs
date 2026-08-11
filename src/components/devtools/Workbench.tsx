@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, Square, Zap, Terminal, Trash2, Link2, Check } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, Square, Zap, Terminal, Trash2, Link2, Check, ImageDown } from "lucide-react";
 import { useSandbox } from "@/hooks/use-sandbox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePresence } from "@/hooks/use-presence";
@@ -7,6 +7,7 @@ import { deriveState, describeEvent } from "@/lib/event-loop";
 import { LoopDiagram } from "./LoopDiagram";
 import { REPL_EXAMPLES } from "@/lib/js-eras";
 import { buildShareUrl, copyText } from "@/lib/share";
+import { renderTraceCard, sharePng } from "@/lib/share-image";
 import { track } from "@/lib/analytics";
 
 // CodeMirror is the heaviest dependency in the Workbench — keep it in its own
@@ -27,8 +28,10 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
   const [speed, setSpeed] = useState(1);
   const [consoleClearSeq, setConsoleClearSeq] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [imageOutcome, setImageOutcome] = useState<"idle" | "working" | "shared" | "copied" | "saved">("idle");
   const logRef = useRef<HTMLDivElement | null>(null);
   const linkResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const imageResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -62,6 +65,7 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
   useEffect(
     () => () => {
       if (linkResetTimer.current) clearTimeout(linkResetTimer.current);
+      if (imageResetTimer.current) clearTimeout(imageResetTimer.current);
     },
     [],
   );
@@ -125,6 +129,26 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
     track("share");
     if (linkResetTimer.current) clearTimeout(linkResetTimer.current);
     linkResetTimer.current = setTimeout(() => setCopiedLink(false), 1500);
+  };
+
+  const handleShareImage = async () => {
+    if (imageOutcome === "working") return;
+    setImageOutcome("working");
+    try {
+      const blob = await renderTraceCard({ state, code, step: cursor, total: trace.length });
+      const outcome = await sharePng(blob, `runtimejs-trace-step-${cursor}.png`);
+      if (outcome === "cancelled") {
+        setImageOutcome("idle");
+        return;
+      }
+      const next = outcome === "share" ? "shared" : outcome === "clipboard" ? "copied" : "saved";
+      setImageOutcome(next);
+      track("share_image", { via: outcome });
+      if (imageResetTimer.current) clearTimeout(imageResetTimer.current);
+      imageResetTimer.current = setTimeout(() => setImageOutcome("idle"), 2000);
+    } catch {
+      setImageOutcome("idle");
+    }
   };
 
   const hasVisibleLogs = state.logs.some((l) => l.seq > consoleClearSeq);
@@ -298,6 +322,33 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
             <span className="w-20 shrink-0 text-right text-[11px] text-muted-foreground">
               {cursor} / {trace.length}
             </span>
+            <button
+              onClick={handleShareImage}
+              disabled={imageOutcome === "working"}
+              title="Export the current trace state as a shareable PNG"
+              className={`inline-flex shrink-0 items-center gap-1 rounded-sm border px-2 py-1 text-xs transition-colors disabled:opacity-50 ${
+                imageOutcome === "idle" || imageOutcome === "working"
+                  ? "border-border text-muted-foreground hover:text-foreground"
+                  : "border-success/60 text-success"
+              }`}
+            >
+              {imageOutcome === "working" ? (
+                <ImageDown className="size-3.5 animate-pulse" />
+              ) : imageOutcome === "idle" ? (
+                <ImageDown className="size-3.5" />
+              ) : (
+                <Check className="size-3.5" />
+              )}
+              {imageOutcome === "working"
+                ? "…"
+                : imageOutcome === "shared"
+                  ? "shared!"
+                  : imageOutcome === "copied"
+                    ? "copied!"
+                    : imageOutcome === "saved"
+                      ? "saved!"
+                      : "image"}
+            </button>
           </div>
         )}
 
