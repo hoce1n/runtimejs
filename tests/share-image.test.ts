@@ -63,12 +63,20 @@ describe("snippetAround", () => {
     expect(s.lines[3]).toBe("const v5 = 5;");
   });
 
-  test("uses the first line when no current line is known", () => {
+  test("renders the top of the file without a focus when no current line is known", () => {
     const code = "a();\nb();\nc();\n";
     const s = snippetAround(code, undefined);
     expect(s.startLine).toBe(1);
-    expect(s.focusIndex).toBe(0);
+    expect(s.focusIndex).toBe(-1);
     expect(s.lines).toEqual(["a();", "b();", "c();"]);
+  });
+
+  test("highlights a line only when a current line is known", () => {
+    const code = "a();\nb();\nc();\nd();\ne();\nf();";
+    expect(snippetAround(code, undefined).focusIndex).toBe(-1);
+    const withLine = snippetAround(code, 3);
+    expect(withLine.focusIndex).not.toBe(-1);
+    expect(withLine.lines[withLine.focusIndex]).toBe("c();");
   });
 
   test("clamps an out-of-range current line", () => {
