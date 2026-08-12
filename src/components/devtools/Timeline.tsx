@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Check, ChevronRight, Play } from "lucide-react";
+import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { ERAS, type Concept } from "@/lib/js-eras";
 import { getProgress, isConceptDone, toggleConcept } from "@/lib/progress";
+import { panelLayoutStorage } from "@/lib/panel-layout";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { CodeBlock } from "./CodeBlock";
 import { CopyButton } from "./CopyButton";
 
@@ -59,13 +62,19 @@ export function Timeline({
   const era = ERAS.find((e) => e.id === activeEra) ?? ERAS[0]!;
   const railRef = useRef<HTMLElement | null>(null);
   const { done, total, toggle } = useConceptProgress();
+  const isWide = useMediaQuery("(min-width: 768px)");
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: "timeline-split",
+    panelIds: ["timeline-rail", "timeline-content"],
+    storage: panelLayoutStorage,
+  });
 
   const onRailKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     if (e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "Home" && e.key !== "End") {
       return;
     }
     const buttons = Array.from(
-      railRef.current?.querySelectorAll<HTMLButtonElement>('[data-era]') ?? [],
+      railRef.current?.querySelectorAll<HTMLButtonElement>("[data-era]") ?? [],
     );
     const current = buttons.findIndex((b) => b.dataset["era"] === era.id);
     if (current === -1 || buttons.length === 0) return;
@@ -82,83 +91,107 @@ export function Timeline({
     onSelectEra(id);
   };
 
-  return (
-    <div className="grid gap-px bg-border md:grid-cols-[220px_1fr]">
-      {/* era rail */}
-      <nav
-        ref={railRef}
-        onKeyDown={onRailKeyDown}
-        className="bg-panel p-2"
-        aria-label="JavaScript eras"
-      >
-        <p className="flex items-baseline justify-between gap-2 px-2 pb-2 pt-1 text-[10.5px] uppercase tracking-widest text-muted-foreground">
-          <span>Timeline</span>
-          <span className="normal-case tracking-normal">
-            {done.size} / {total} concepts
-          </span>
-        </p>
-        <ol className="space-y-px">
-          {ERAS.map((e, i) => {
-            const active = e.id === era.id;
-            return (
-              <li key={e.id}>
-                <button
-                  onClick={() => onSelectEra(e.id)}
-                  data-era={e.id}
-                  aria-current={active ? "true" : undefined}
-                  className={`flex w-full items-center gap-2 border-l-2 px-2.5 py-2 text-left text-xs transition-colors ${
-                    active
-                      ? "border-l-primary bg-accent text-foreground"
-                      : "border-l-transparent text-muted-foreground hover:bg-accent/50 hover:text-foreground active:bg-accent/70"
-                  }`}
-                >
-                  <span className="w-4 shrink-0 text-[10px] text-muted-foreground">
-                    {String(i).padStart(2, "0")}
+  const railBody = (
+    <nav
+      ref={railRef}
+      onKeyDown={onRailKeyDown}
+      className="bg-panel p-2"
+      aria-label="JavaScript eras"
+    >
+      <p className="flex items-baseline justify-between gap-2 px-2 pb-2 pt-1 text-[10.5px] uppercase tracking-widest text-muted-foreground">
+        <span>Timeline</span>
+        <span className="normal-case tracking-normal">
+          {done.size} / {total} concepts
+        </span>
+      </p>
+      <ol className="space-y-px">
+        {ERAS.map((e, i) => {
+          const active = e.id === era.id;
+          return (
+            <li key={e.id}>
+              <button
+                onClick={() => onSelectEra(e.id)}
+                data-era={e.id}
+                aria-current={active ? "true" : undefined}
+                className={`flex w-full items-center gap-2 border-l-2 px-2.5 py-2 text-left text-xs transition-colors ${
+                  active
+                    ? "border-l-primary bg-accent text-foreground"
+                    : "border-l-transparent text-muted-foreground hover:bg-accent/50 hover:text-foreground active:bg-accent/70"
+                }`}
+              >
+                <span className="w-4 shrink-0 text-[10px] text-muted-foreground">
+                  {String(i).padStart(2, "0")}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{e.label}</span>
+                  <span className="block truncate text-[10.5px] text-muted-foreground">
+                    {e.years}
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{e.label}</span>
-                    <span className="block truncate text-[10.5px] text-muted-foreground">
-                      {e.years}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
 
-      {/* era detail */}
-      <div className="bg-card">
-        <article key={era.id} className="p-5 md:p-7">
-          <header className="border-b border-border pb-5">
-            <div className="flex flex-wrap items-baseline gap-3">
-              <h2 className="text-xl font-bold text-primary">{era.label}</h2>
-              <span className="rounded-sm border border-secondary/50 px-1.5 py-0.5 text-[10.5px] text-secondary">
-                {era.spec}
-              </span>
-              <span className="text-xs text-muted-foreground">{era.years}</span>
-            </div>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-panel-foreground">
-              {era.summary}
-            </p>
-          </header>
-
-          <div className="divide-y divide-border">
-            {era.concepts.map((concept) => (
-              <ConceptRow
-                key={concept.id}
-                concept={concept}
-                open={expandedConcept === concept.id}
-                done={done.has(concept.id)}
-                onMark={() => toggle(concept.id)}
-                onToggle={() => onToggleConcept(expandedConcept === concept.id ? null : concept.id)}
-                onRun={onRun}
-              />
-            ))}
+  const contentBody = (
+    <div className="bg-card">
+      <article key={era.id} className="p-5 md:p-7">
+        <header className="border-b border-border pb-5">
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h2 className="text-xl font-bold text-primary">{era.label}</h2>
+            <span className="rounded-sm border border-secondary/50 px-1.5 py-0.5 text-[10.5px] text-secondary">
+              {era.spec}
+            </span>
+            <span className="text-xs text-muted-foreground">{era.years}</span>
           </div>
-        </article>
-      </div>
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-panel-foreground">
+            {era.summary}
+          </p>
+        </header>
+
+        <div className="divide-y divide-border">
+          {era.concepts.map((concept) => (
+            <ConceptRow
+              key={concept.id}
+              concept={concept}
+              open={expandedConcept === concept.id}
+              done={done.has(concept.id)}
+              onMark={() => toggle(concept.id)}
+              onToggle={() => onToggleConcept(expandedConcept === concept.id ? null : concept.id)}
+              onRun={onRun}
+            />
+          ))}
+        </div>
+      </article>
+    </div>
+  );
+
+  if (isWide) {
+    return (
+      <Group
+        orientation="horizontal"
+        defaultLayout={defaultLayout}
+        onLayoutChanged={onLayoutChanged}
+        resizeTargetMinimumSize={{ coarse: 20, fine: 8 }}
+      >
+        <Panel id="timeline-rail" defaultSize={220} minSize={140} maxSize={480}>
+          {railBody}
+        </Panel>
+        <Separator className="w-px shrink-0 bg-border transition-colors data-[separator=hover]:bg-secondary/70 data-[separator=active]:bg-secondary" />
+        <Panel id="timeline-content" minSize="25">
+          {contentBody}
+        </Panel>
+      </Group>
+    );
+  }
+
+  return (
+    <div className="grid gap-px bg-border">
+      {railBody}
+      {contentBody}
     </div>
   );
 }
