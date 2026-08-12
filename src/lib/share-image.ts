@@ -18,6 +18,7 @@ export const TRACE_CARD_HEIGHT = 630;
 const MAX_STACK_FRAMES = 8;
 const MAX_QUEUE_ITEMS = 7;
 const SNIPPET_LINES = 4;
+const MAX_DPR = 3;
 
 const FONT = '"JetBrains Mono", ui-monospace, SFMono-Regular, monospace';
 
@@ -82,7 +83,8 @@ export function snippetAround(
   let start = Math.max(0, target - 2);
   start = Math.min(start, Math.max(0, src.length - SNIPPET_LINES));
   const lines = src.slice(start, start + SNIPPET_LINES);
-  return { startLine: start + 1, lines, focusIndex: target - 1 - start };
+  const focusIndex = currentLine === undefined ? -1 : target - 1 - start;
+  return { startLine: start + 1, lines, focusIndex };
 }
 
 /* ------------------------------------------------------------------------- *
@@ -119,11 +121,18 @@ async function ensureFonts(): Promise<void> {
 
 export async function renderTraceCard(input: TraceCardInput): Promise<Blob> {
   await ensureFonts();
+  // Render at device resolution and scale the context back to logical units, so
+  // exports stay crisp on HiDPI/retina displays and in full-size previews.
+  const dpr = Math.max(
+    1,
+    Math.min((typeof window !== "undefined" && window.devicePixelRatio) || 1, MAX_DPR),
+  );
   const canvas = document.createElement("canvas");
-  canvas.width = TRACE_CARD_WIDTH;
-  canvas.height = TRACE_CARD_HEIGHT;
+  canvas.width = TRACE_CARD_WIDTH * dpr;
+  canvas.height = TRACE_CARD_HEIGHT * dpr;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas 2D is not available in this browser");
+  ctx.scale(dpr, dpr);
   drawTraceCard(ctx, input);
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -286,13 +295,15 @@ function drawTraceCard(ctx: Ctx, input: TraceCardInput): void {
   const lineH = 24;
   const textX = innerX + 16 + gutterW;
   const maxTextW = innerW - 32 - gutterW;
+  // The active line spans the full inner content width (matching the live
+  // CodeMirror highlight), never just the width of the rendered text.
+  const codeLeft = innerX + 16;
+  const codeRight = innerX + innerW - 16;
   for (let i = 0; i < excerpt.lines.length; i++) {
     const y = codeTop + 46 + i * lineH;
     if (i === excerpt.focusIndex) {
       ctx.fillStyle = "oklch(0.892 0.181 102.4 / 0.12)";
-      ctx.fillRect(textX - 8, y - lineH + 3, maxTextW + 8, lineH - 2);
-      ctx.fillStyle = C.stack;
-      ctx.fillRect(textX - 8, y - lineH + 3, 3, lineH - 2);
+      ctx.fillRect(codeLeft, y - lineH + 3, codeRight - codeLeft, lineH - 2);
     }
     ctx.fillStyle = C.muted;
     ctx.font = `400 12px ${FONT}`;
