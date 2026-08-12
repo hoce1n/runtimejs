@@ -1,4 +1,4 @@
-# js-timeline-explore
+# RuntimeJs
 
 Interactive JavaScript timeline with a sandboxed REPL and real event-loop visualizer.
 
