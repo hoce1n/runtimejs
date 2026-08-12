@@ -1,7 +1,23 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, Square, Zap, Terminal, Trash2, Link2, Check, ImageDown } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  RotateCcw,
+  Square,
+  Zap,
+  Terminal,
+  Trash2,
+  Link2,
+  Check,
+  ImageDown,
+} from "lucide-react";
+import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { useSandbox } from "@/hooks/use-sandbox";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { panelLayoutStorage } from "@/lib/panel-layout";
 import { usePresence } from "@/hooks/use-presence";
 import { deriveState, describeEvent } from "@/lib/event-loop";
 import { LoopDiagram } from "./LoopDiagram";
@@ -28,11 +44,19 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
   const [speed, setSpeed] = useState(1);
   const [consoleClearSeq, setConsoleClearSeq] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [imageOutcome, setImageOutcome] = useState<"idle" | "working" | "shared" | "copied" | "saved">("idle");
+  const [imageOutcome, setImageOutcome] = useState<
+    "idle" | "working" | "shared" | "copied" | "saved"
+  >("idle");
   const logRef = useRef<HTMLDivElement | null>(null);
   const linkResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: "workbench-split",
+    panelIds: ["workbench-editor", "workbench-output"],
+    storage: panelLayoutStorage,
+  });
 
   useEffect(() => {
     if (mode === "run") setCursor(trace.length);
@@ -153,254 +177,278 @@ export default function Workbench({ code, onCodeChange, view }: Props) {
 
   const hasVisibleLogs = state.logs.some((l) => l.seq > consoleClearSeq);
 
-  return (
-    <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border lg:grid-cols-2">
-      {/* editor column */}
-      <div className="flex h-[300px] flex-col bg-card lg:h-[520px]">
-        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-panel px-3 py-2">
-          <button
-            onClick={handleRun}
-            disabled={status === "booting"}
-            title="Run (Ctrl/Cmd+Enter)"
-            className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground transition-opacity hover:opacity-85 disabled:opacity-40"
-          >
-            <Play className="size-3.5" />
-            {mode === "step" ? "Record" : "Run"}
-          </button>
+  const editorBody = (
+    <>
+      <div className="flex flex-wrap items-center gap-2 border-b border-border bg-panel px-3 py-2">
+        <button
+          onClick={handleRun}
+          disabled={status === "booting"}
+          title="Run (Ctrl/Cmd+Enter)"
+          className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground transition-opacity hover:opacity-85 disabled:opacity-40"
+        >
+          <Play className="size-3.5" />
+          {mode === "step" ? "Record" : "Run"}
+        </button>
 
-          <div className="flex overflow-hidden rounded-sm border border-border">
-            {(["run", "step"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMode(m);
-                  setCursor(m === "run" ? trace.length : 0);
-                }}
-                className={`px-2.5 py-1 text-xs transition-colors ${
-                  mode === m
-                    ? "bg-secondary text-secondary-foreground"
-                    : "bg-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {m === "run" ? "live" : "step"}
-              </button>
-            ))}
-          </div>
+        <div className="flex overflow-hidden rounded-sm border border-border">
+          {(["run", "step"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setMode(m);
+                setCursor(m === "run" ? trace.length : 0);
+              }}
+              className={`px-2.5 py-1 text-xs transition-colors ${
+                mode === m
+                  ? "bg-secondary text-secondary-foreground"
+                  : "bg-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {m === "run" ? "live" : "step"}
+            </button>
+          ))}
+        </div>
 
-          <select
-            aria-label="Load example"
-            className="rounded-sm border border-border bg-card px-2 py-1 text-xs text-muted-foreground outline-none focus:border-secondary"
-            value=""
-            onChange={(e) => {
-              const found = REPL_EXAMPLES.find((x) => x.id === e.target.value);
-              if (found) {
-                onCodeChange(found.code);
-                reset();
-                setCursor(0);
-                track("load_example", { id: found.id });
-              }
-            }}
-          >
-            <option value="">examples…</option>
-            {REPL_EXAMPLES.map((ex) => (
-              <option key={ex.id} value={ex.id}>
-                {ex.label}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={() => {
+        <select
+          aria-label="Load example"
+          className="rounded-sm border border-border bg-card px-2 py-1 text-xs text-muted-foreground outline-none focus:border-secondary"
+          value=""
+          onChange={(e) => {
+            const found = REPL_EXAMPLES.find((x) => x.id === e.target.value);
+            if (found) {
+              onCodeChange(found.code);
               reset();
               setCursor(0);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <RotateCcw className="size-3.5" /> clear
-          </button>
-
-          <button
-            onClick={handleShare}
-            title="Copy a share link with this code embedded"
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {copiedLink ? <Check className="size-3.5" /> : <Link2 className="size-3.5" />}
-            {copiedLink ? "copied" : "share"}
-          </button>
-
-          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span
-              className={`size-1.5 rounded-full ${
-                status === "running"
-                  ? "bg-warning"
-                  : status === "timeout"
-                    ? "bg-destructive"
-                    : status === "booting"
-                      ? "bg-muted-foreground"
-                      : "bg-success"
-              }`}
-            />
-            sandbox: {status}
-            <span className="ml-1 hidden rounded-sm border border-border px-1 py-px text-[10px] sm:inline">
-              ⌘/Ctrl⏎ run · ⌘/CtrlK clear
-            </span>
-          </span>
-        </div>
-
-        <div className="min-h-0 flex-1">
-          <Suspense
-            fallback={
-              <div className="flex h-full min-h-[220px] items-center justify-center text-sm text-muted-foreground">
-                loading editor…
-              </div>
+              track("load_example", { id: found.id });
             }
-          >
-            <CodeEditor
-              value={code}
-              onChange={onCodeChange}
-              onRun={handleRun}
-              activeLine={state.currentLine ?? null}
-              minHeight={isMobile ? "140px" : "380px"}
-            />
-          </Suspense>
-        </div>
+          }}
+        >
+          <option value="">examples…</option>
+          {REPL_EXAMPLES.map((ex) => (
+            <option key={ex.id} value={ex.id}>
+              {ex.label}
+            </option>
+          ))}
+        </select>
 
-        {canStep && (
-          <div className="flex items-center gap-2 border-t border-border bg-panel px-3 py-2">
-            <button
-              onClick={() => {
-                if (cursor >= trace.length) setCursor(0);
-                setPlaying((p) => !p);
-              }}
-              aria-label={playing ? "Pause replay" : "Play replay"}
-              title={playing ? "Pause replay" : "Replay the trace (autoplay)"}
-              className={`inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-xs transition-colors ${
-                playing
-                  ? "border-warning/60 text-warning"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-              {playing ? "pause" : "play"}
-            </button>
-            <select
-              aria-label="Replay speed"
-              title="Replay speed"
-              value={speed}
-              onChange={(e) => setSpeed(Number(e.target.value))}
-              className="rounded-sm border border-border bg-card px-1.5 py-1 text-[11px] text-muted-foreground outline-none focus:border-secondary"
-            >
-              <option value={0.25}>0.25×</option>
-              <option value={0.5}>0.5×</option>
-              <option value={1}>1×</option>
-              <option value={2}>2×</option>
-              <option value={4}>4×</option>
-            </select>
-            <button
-              onClick={() => setCursor((c) => Math.max(0, c - 1))}
-              className="rounded-sm border border-border p-1 text-muted-foreground hover:text-foreground"
-              aria-label="Step backward"
-            >
-              <SkipBack className="size-3.5" />
-            </button>
-            <button
-              onClick={() => setCursor((c) => Math.min(trace.length, c + 1))}
-              className="rounded-sm border border-border p-1 text-muted-foreground hover:text-foreground"
-              aria-label="Step forward"
-            >
-              <SkipForward className="size-3.5" />
-            </button>
-            <input
-              type="range"
-              min={0}
-              max={trace.length}
-              value={cursor}
-              onChange={(e) => setCursor(Number(e.target.value))}
-              aria-label="Execution step"
-              className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-accent accent-primary"
-            />
-            <span className="w-20 shrink-0 text-right text-[11px] text-muted-foreground">
-              {cursor} / {trace.length}
-            </span>
-            <button
-              onClick={handleShareImage}
-              disabled={imageOutcome === "working"}
-              title="Export the current trace state as a shareable PNG"
-              className={`inline-flex shrink-0 items-center gap-1 rounded-sm border px-2 py-1 text-xs transition-colors disabled:opacity-50 ${
-                imageOutcome === "idle" || imageOutcome === "working"
-                  ? "border-border text-muted-foreground hover:text-foreground"
-                  : "border-success/60 text-success"
-              }`}
-            >
-              {imageOutcome === "working" ? (
-                <ImageDown className="size-3.5 animate-pulse" />
-              ) : imageOutcome === "idle" ? (
-                <ImageDown className="size-3.5" />
-              ) : (
-                <Check className="size-3.5" />
-              )}
-              {imageOutcome === "working"
-                ? "…"
-                : imageOutcome === "shared"
-                  ? "shared!"
-                  : imageOutcome === "copied"
-                    ? "copied!"
-                    : imageOutcome === "saved"
-                      ? "saved!"
-                      : "image"}
-            </button>
-          </div>
-        )}
+        <button
+          onClick={() => {
+            reset();
+            setCursor(0);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <RotateCcw className="size-3.5" /> clear
+        </button>
 
-        {canStep && (
-          <div className="border-t border-border bg-card px-3 py-2 text-[11.5px] text-panel-foreground">
-            <span className="text-secondary">step&gt;</span>{" "}
-            {lastEvent ? describeEvent(lastEvent) : "before first instruction"}
-            {lastEvent && (
-              <span className="ml-1 text-muted-foreground">
-                · at {lastEvent.t.toFixed(1)}ms
-                {cursor > 1 && prevEvent
-                  ? ` (+${(lastEvent.t - prevEvent.t).toFixed(1)}ms)`
-                  : ""}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+        <button
+          onClick={handleShare}
+          title="Copy a share link with this code embedded"
+          className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {copiedLink ? <Check className="size-3.5" /> : <Link2 className="size-3.5" />}
+          {copiedLink ? "copied" : "share"}
+        </button>
 
-      {/* output column */}
-      <div className="flex h-[300px] flex-col bg-card lg:h-[520px]">
-        <div className="flex items-center gap-2 border-b border-border bg-panel px-3 py-2 text-xs text-muted-foreground">
-          {view === "console" ? <Terminal className="size-3.5" /> : <Zap className="size-3.5" />}
-          {view === "console" ? "Console output" : "Event loop — live instrumentation"}
-          {recording && <span className="ml-auto text-warning">recording…</span>}
-          {view === "console" ? (
-            <button
-              onClick={handleClearConsole}
-              disabled={!hasVisibleLogs}
-              title="Clear console output (⌘/Ctrl+K)"
-              className={`inline-flex items-center gap-1 rounded-sm border border-border px-1.5 py-0.5 text-[11px] transition-colors hover:text-foreground disabled:opacity-40 ${
-                recording ? "" : "ml-auto"
-              }`}
-            >
-              <Trash2 className="size-3" /> clear
-            </button>
-          ) : null}
-        </div>
-
-        {view === "console" ? (
-          <ConsolePanel
-            logs={state.logs}
-            clearAfterSeq={consoleClearSeq}
-            logRef={logRef}
-            status={status}
-            traceLength={trace.length}
+        <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span
+            className={`size-1.5 rounded-full ${
+              status === "running"
+                ? "bg-warning"
+                : status === "timeout"
+                  ? "bg-destructive"
+                  : status === "booting"
+                    ? "bg-muted-foreground"
+                    : "bg-success"
+            }`}
           />
-        ) : (
-          <LoopPanel state={state} traceLength={trace.length} />
-        )}
+          sandbox: {status}
+          <span className="ml-1 hidden rounded-sm border border-border px-1 py-px text-[10px] sm:inline">
+            ⌘/Ctrl⏎ run · ⌘/CtrlK clear
+          </span>
+        </span>
       </div>
 
+      <div className="min-h-0 flex-1">
+        <Suspense
+          fallback={
+            <div className="flex h-full min-h-[220px] items-center justify-center text-sm text-muted-foreground">
+              loading editor…
+            </div>
+          }
+        >
+          <CodeEditor
+            value={code}
+            onChange={onCodeChange}
+            onRun={handleRun}
+            activeLine={state.currentLine ?? null}
+            minHeight={isMobile ? "140px" : "380px"}
+          />
+        </Suspense>
+      </div>
+
+      {canStep && (
+        <div className="flex items-center gap-2 border-t border-border bg-panel px-3 py-2">
+          <button
+            onClick={() => {
+              if (cursor >= trace.length) setCursor(0);
+              setPlaying((p) => !p);
+            }}
+            aria-label={playing ? "Pause replay" : "Play replay"}
+            title={playing ? "Pause replay" : "Replay the trace (autoplay)"}
+            className={`inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-xs transition-colors ${
+              playing
+                ? "border-warning/60 text-warning"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+            {playing ? "pause" : "play"}
+          </button>
+          <select
+            aria-label="Replay speed"
+            title="Replay speed"
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="rounded-sm border border-border bg-card px-1.5 py-1 text-[11px] text-muted-foreground outline-none focus:border-secondary"
+          >
+            <option value={0.25}>0.25×</option>
+            <option value={0.5}>0.5×</option>
+            <option value={1}>1×</option>
+            <option value={2}>2×</option>
+            <option value={4}>4×</option>
+          </select>
+          <button
+            onClick={() => setCursor((c) => Math.max(0, c - 1))}
+            className="rounded-sm border border-border p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Step backward"
+          >
+            <SkipBack className="size-3.5" />
+          </button>
+          <button
+            onClick={() => setCursor((c) => Math.min(trace.length, c + 1))}
+            className="rounded-sm border border-border p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Step forward"
+          >
+            <SkipForward className="size-3.5" />
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={trace.length}
+            value={cursor}
+            onChange={(e) => setCursor(Number(e.target.value))}
+            aria-label="Execution step"
+            className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-accent accent-primary"
+          />
+          <span className="w-20 shrink-0 text-right text-[11px] text-muted-foreground">
+            {cursor} / {trace.length}
+          </span>
+          <button
+            onClick={handleShareImage}
+            disabled={imageOutcome === "working"}
+            title="Export the current trace state as a shareable PNG"
+            className={`inline-flex shrink-0 items-center gap-1 rounded-sm border px-2 py-1 text-xs transition-colors disabled:opacity-50 ${
+              imageOutcome === "idle" || imageOutcome === "working"
+                ? "border-border text-muted-foreground hover:text-foreground"
+                : "border-success/60 text-success"
+            }`}
+          >
+            {imageOutcome === "working" ? (
+              <ImageDown className="size-3.5 animate-pulse" />
+            ) : imageOutcome === "idle" ? (
+              <ImageDown className="size-3.5" />
+            ) : (
+              <Check className="size-3.5" />
+            )}
+            {imageOutcome === "working"
+              ? "…"
+              : imageOutcome === "shared"
+                ? "shared!"
+                : imageOutcome === "copied"
+                  ? "copied!"
+                  : imageOutcome === "saved"
+                    ? "saved!"
+                    : "image"}
+          </button>
+        </div>
+      )}
+
+      {canStep && (
+        <div className="border-t border-border bg-card px-3 py-2 text-[11.5px] text-panel-foreground">
+          <span className="text-secondary">step&gt;</span>{" "}
+          {lastEvent ? describeEvent(lastEvent) : "before first instruction"}
+          {lastEvent && (
+            <span className="ml-1 text-muted-foreground">
+              · at {lastEvent.t.toFixed(1)}ms
+              {cursor > 1 && prevEvent ? ` (+${(lastEvent.t - prevEvent.t).toFixed(1)}ms)` : ""}
+            </span>
+          )}
+        </div>
+      )}
+    </>
+  );
+
+  const outputBody = (
+    <>
+      <div className="flex items-center gap-2 border-b border-border bg-panel px-3 py-2 text-xs text-muted-foreground">
+        {view === "console" ? <Terminal className="size-3.5" /> : <Zap className="size-3.5" />}
+        {view === "console" ? "Console output" : "Event loop — live instrumentation"}
+        {recording && <span className="ml-auto text-warning">recording…</span>}
+        {view === "console" ? (
+          <button
+            onClick={handleClearConsole}
+            disabled={!hasVisibleLogs}
+            title="Clear console output (⌘/Ctrl+K)"
+            className={`inline-flex items-center gap-1 rounded-sm border border-border px-1.5 py-0.5 text-[11px] transition-colors hover:text-foreground disabled:opacity-40 ${
+              recording ? "" : "ml-auto"
+            }`}
+          >
+            <Trash2 className="size-3" /> clear
+          </button>
+        ) : null}
+      </div>
+
+      {view === "console" ? (
+        <ConsolePanel
+          logs={state.logs}
+          clearAfterSeq={consoleClearSeq}
+          logRef={logRef}
+          status={status}
+          traceLength={trace.length}
+        />
+      ) : (
+        <LoopPanel state={state} traceLength={trace.length} />
+      )}
+    </>
+  );
+
+  if (isDesktop) {
+    return (
+      <div className="h-[520px] overflow-hidden rounded-sm border border-border bg-border">
+        <Group
+          orientation="horizontal"
+          defaultLayout={defaultLayout}
+          onLayoutChanged={onLayoutChanged}
+          resizeTargetMinimumSize={{ coarse: 20, fine: 8 }}
+        >
+          <Panel id="workbench-editor" minSize="25" defaultSize="50">
+            <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">{editorBody}</div>
+          </Panel>
+          <Separator className="w-px shrink-0 bg-border transition-colors data-[separator=hover]:bg-secondary/70 data-[separator=active]:bg-secondary" />
+          <Panel id="workbench-output" minSize="25" defaultSize="50">
+            <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">{outputBody}</div>
+          </Panel>
+        </Group>
+        <div ref={hostRef} aria-hidden className="hidden" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border">
+      <div className="flex h-[300px] flex-col bg-card">{editorBody}</div>
+      <div className="flex h-[300px] flex-col bg-card">{outputBody}</div>
       <div ref={hostRef} aria-hidden className="hidden" />
     </div>
   );
@@ -423,56 +471,63 @@ function ConsolePanel({
   const visibleLogs = logs.filter((log) => log.seq > clearAfterSeq);
   const cleared = clearAfterSeq > 0;
   const hidden = Math.max(0, visibleLogs.length - MAX_RENDERED_LOGS);
-  const shown = hidden > 0 ? visibleLogs.slice(visibleLogs.length - MAX_RENDERED_LOGS) : visibleLogs;
+  const shown =
+    hidden > 0 ? visibleLogs.slice(visibleLogs.length - MAX_RENDERED_LOGS) : visibleLogs;
   return (
     <>
       <p className="border-b border-border/60 bg-panel/60 px-3 py-1 text-[11px] text-muted-foreground">
         fetch is mocked in this sandbox — no network access.
       </p>
-    <div ref={logRef} className="min-h-0 flex-1 overflow-auto px-3 py-2 text-[12.5px] leading-relaxed">
-
-      {visibleLogs.length === 0 && logs.length === 0 && traceLength === 0 && (
-        <p className="text-muted-foreground">
-          <span className="text-secondary">&gt;</span> nothing logged yet — hit Run.
-        </p>
-      )}
-      {visibleLogs.length === 0 && logs.length === 0 && traceLength > 0 && status !== "running" && !cleared && (
-        <p className="text-muted-foreground">
-          <span className="text-secondary">&gt;</span> executed with no console output.
-        </p>
-      )}
-      {cleared && visibleLogs.length === 0 && logs.length > 0 && (
-        <p className="text-muted-foreground">
-          <span className="text-secondary">&gt;</span> console cleared — rerun to capture more output.
-        </p>
-      )}
-      {hidden > 0 && (
-        <p className="mb-1 border-b border-border/40 py-1 text-[11px] text-warning">
-          output truncated — {hidden} earlier line{hidden === 1 ? "" : "s"} hidden (showing last{" "}
-          {MAX_RENDERED_LOGS})
-        </p>
-      )}
-      {shown.map((log) => (
-        <div
-          key={log.seq}
-          className={`flex gap-2 border-b border-border/40 py-1 font-mono ${
-            log.level === "error"
-              ? "text-destructive"
-              : log.level === "warn"
-                ? "text-warning"
-                : "text-foreground"
-          }`}
-        >
-          <span className="select-none text-muted-foreground">
-            {log.level === "error" ? "✕" : log.level === "warn" ? "▲" : "›"}
-          </span>
-          <pre className="whitespace-pre-wrap break-words">{log.text}</pre>
-        </div>
-      ))}
-    </div>
+      <div
+        ref={logRef}
+        className="min-h-0 flex-1 overflow-auto px-3 py-2 text-[12.5px] leading-relaxed"
+      >
+        {visibleLogs.length === 0 && logs.length === 0 && traceLength === 0 && (
+          <p className="text-muted-foreground">
+            <span className="text-secondary">&gt;</span> nothing logged yet — hit Run.
+          </p>
+        )}
+        {visibleLogs.length === 0 &&
+          logs.length === 0 &&
+          traceLength > 0 &&
+          status !== "running" &&
+          !cleared && (
+            <p className="text-muted-foreground">
+              <span className="text-secondary">&gt;</span> executed with no console output.
+            </p>
+          )}
+        {cleared && visibleLogs.length === 0 && logs.length > 0 && (
+          <p className="text-muted-foreground">
+            <span className="text-secondary">&gt;</span> console cleared — rerun to capture more
+            output.
+          </p>
+        )}
+        {hidden > 0 && (
+          <p className="mb-1 border-b border-border/40 py-1 text-[11px] text-warning">
+            output truncated — {hidden} earlier line{hidden === 1 ? "" : "s"} hidden (showing last{" "}
+            {MAX_RENDERED_LOGS})
+          </p>
+        )}
+        {shown.map((log) => (
+          <div
+            key={log.seq}
+            className={`flex gap-2 border-b border-border/40 py-1 font-mono ${
+              log.level === "error"
+                ? "text-destructive"
+                : log.level === "warn"
+                  ? "text-warning"
+                  : "text-foreground"
+            }`}
+          >
+            <span className="select-none text-muted-foreground">
+              {log.level === "error" ? "✕" : log.level === "warn" ? "▲" : "›"}
+            </span>
+            <pre className="whitespace-pre-wrap break-words">{log.text}</pre>
+          </div>
+        ))}
+      </div>
     </>
   );
-
 }
 
 function LoopPanel({
@@ -487,9 +542,7 @@ function LoopPanel({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2 border-b border-border bg-panel px-3 py-1.5">
-        <span className="text-[10.5px] uppercase tracking-widest text-muted-foreground">
-          view
-        </span>
+        <span className="text-[10.5px] uppercase tracking-widest text-muted-foreground">view</span>
         <div className="flex overflow-hidden rounded-sm border border-border">
           {(["text", "diagram"] as const).map((v) => (
             <button
